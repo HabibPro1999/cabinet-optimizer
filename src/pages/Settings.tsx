@@ -9,13 +9,17 @@ import {
   Trash, 
   Check, 
   X,
-  AlertCircle
+  AlertCircle,
+  Sun,
+  Moon
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { UserRole } from "@/types";
+import { Input } from "@/components/ui/input";
+import { useTheme } from "@/context/ThemeContext";
 
 // Mock data for demonstration
 const MOCK_USERS = [
@@ -45,23 +49,106 @@ const MOCK_USERS = [
   },
 ];
 
+interface NewUserForm {
+  name: string;
+  email: string;
+  role: UserRole;
+  password: string;
+}
+
 const Settings = () => {
   const [users, setUsers] = useState(MOCK_USERS);
   const [activeTab, setActiveTab] = useState<"users" | "permissions" | "general">("users");
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [newUser, setNewUser] = useState<NewUserForm>({
+    name: "",
+    email: "",
+    role: "doctor",
+    password: "",
+  });
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Omit<NewUserForm, 'password'>>({
+    name: "",
+    email: "",
+    role: "doctor",
+  });
+  const { theme, toggleTheme } = useTheme();
 
   // Handle adding a new user
   const handleAddUser = () => {
-    toast.info("Formulaire d'ajout d'utilisateur ouvert");
+    if (showAddUserForm) {
+      if (newUser.name && newUser.email && newUser.password) {
+        // Add new user
+        setUsers([
+          ...users,
+          {
+            id: `u${users.length + 1}`,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+          },
+        ]);
+        
+        // Reset form and hide it
+        setNewUser({
+          name: "",
+          email: "",
+          role: "doctor",
+          password: "",
+        });
+        setShowAddUserForm(false);
+        
+        toast.success("Utilisateur ajouté avec succès");
+      } else {
+        toast.error("Veuillez remplir tous les champs obligatoires");
+      }
+    } else {
+      setShowAddUserForm(true);
+    }
   };
 
   // Handle editing a user
   const handleEditUser = (userId: string) => {
-    toast.info(`Modification de l'utilisateur: ${userId}`);
+    if (editingUser === userId) {
+      // Save changes
+      setUsers(
+        users.map((user) =>
+          user.id === userId
+            ? { ...user, name: editForm.name, email: editForm.email, role: editForm.role }
+            : user
+        )
+      );
+      setEditingUser(null);
+      toast.success("Utilisateur modifié avec succès");
+    } else {
+      // Start editing
+      const userToEdit = users.find((user) => user.id === userId);
+      if (userToEdit) {
+        setEditForm({
+          name: userToEdit.name,
+          email: userToEdit.email,
+          role: userToEdit.role,
+        });
+        setEditingUser(userId);
+      }
+    }
   };
 
   // Handle deleting a user
   const handleDeleteUser = (userId: string) => {
-    toast.info(`Suppression de l'utilisateur: ${userId}`);
+    const userToDelete = users.find((user) => user.id === userId);
+    if (userToDelete?.role === "admin") {
+      toast.error("Impossible de supprimer un administrateur");
+      return;
+    }
+    
+    setUsers(users.filter((user) => user.id !== userId));
+    toast.success("Utilisateur supprimé avec succès");
+  };
+
+  // Handle canceling edit
+  const handleCancelEdit = () => {
+    setEditingUser(null);
   };
 
   // Render role badge
@@ -141,39 +228,156 @@ const Settings = () => {
               </Button>
             </div>
 
+            {showAddUserForm && (
+              <div className="p-4 bg-secondary/30 border-b border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium">Ajouter un nouvel utilisateur</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setShowAddUserForm(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Nom complet*</label>
+                    <Input
+                      value={newUser.name}
+                      onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Email*</label>
+                    <Input
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Mot de passe*</label>
+                    <Input
+                      type="password"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Rôle*</label>
+                    <select
+                      value={newUser.role}
+                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })}
+                      className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      <option value="admin">Administrateur</option>
+                      <option value="doctor">Médecin</option>
+                      <option value="assistant">Assistant</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowAddUserForm(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={handleAddUser}>
+                    Ajouter l'utilisateur
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="divide-y divide-border">
               {users.map((user) => (
                 <div key={user.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                      {user.name.charAt(0)}
+                  {editingUser === user.id ? (
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <Input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <Input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <select
+                          value={editForm.role}
+                          onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2"
+                          disabled={user.role === "admin"}
+                        >
+                          <option value="admin">Administrateur</option>
+                          <option value="doctor">Médecin</option>
+                          <option value="assistant">Assistant</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleCancelEdit}
+                        >
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditUser(user.id)}
+                        >
+                          <Check className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                          {user.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-3">
-                    <RoleBadge role={user.role} />
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditUser(user.id)}
-                      >
-                        <Edit className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteUser(user.id)}
-                        disabled={user.role === "admin"}
-                      >
-                        <Trash className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <RoleBadge role={user.role} />
+                        <div className="flex items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditUser(user.id)}
+                          >
+                            <Edit className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteUser(user.id)}
+                            disabled={user.role === "admin"}
+                          >
+                            <Trash className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -302,6 +506,32 @@ const Settings = () => {
                       defaultValue="Fermé"
                     />
                   </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-3 block">Thème</label>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant={theme === "light" ? "default" : "outline"}
+                    className="gap-2"
+                    onClick={() => {
+                      if (theme !== "light") toggleTheme();
+                    }}
+                  >
+                    <Sun className="h-5 w-5" />
+                    Clair
+                  </Button>
+                  <Button
+                    variant={theme === "dark" ? "default" : "outline"}
+                    className="gap-2"
+                    onClick={() => {
+                      if (theme !== "dark") toggleTheme();
+                    }}
+                  >
+                    <Moon className="h-5 w-5" />
+                    Sombre
+                  </Button>
                 </div>
               </div>
               

@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, 
   Search, 
@@ -7,7 +8,8 @@ import {
   FileText, 
   MoreHorizontal,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  X
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -58,9 +60,24 @@ const MOCK_PATIENTS = [
   },
 ];
 
+interface NewPatientForm {
+  fullName: string;
+  parentName: string;
+  parentPhone: string;
+  condition: string;
+}
+
 const Patients = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState(MOCK_PATIENTS);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newPatient, setNewPatient] = useState<NewPatientForm>({
+    fullName: "",
+    parentName: "",
+    parentPhone: "",
+    condition: "",
+  });
+  const navigate = useNavigate();
 
   // Filter patients based on search query
   const filteredPatients = patients.filter(
@@ -72,12 +89,42 @@ const Patients = () => {
 
   // Handle adding a new patient
   const handleAddPatient = () => {
-    toast.info("Formulaire d'ajout de patient ouvert");
+    if (showAddForm) {
+      if (newPatient.fullName && newPatient.parentName && newPatient.parentPhone) {
+        // Add new patient to the list
+        const newId = `p${patients.length + 1}`;
+        const createdAt = new Date().toISOString().split('T')[0];
+        
+        setPatients([
+          ...patients,
+          {
+            id: newId,
+            ...newPatient,
+            createdAt,
+          },
+        ]);
+        
+        // Reset form and hide it
+        setNewPatient({
+          fullName: "",
+          parentName: "",
+          parentPhone: "",
+          condition: "",
+        });
+        setShowAddForm(false);
+        
+        toast.success("Patient ajouté avec succès");
+      } else {
+        toast.error("Veuillez remplir tous les champs obligatoires");
+      }
+    } else {
+      setShowAddForm(true);
+    }
   };
 
   // Handle viewing a patient's details
   const handleViewPatient = (patientId: string) => {
-    toast.info(`Affichage des détails du patient: ${patientId}`);
+    navigate(`/patients/${patientId}`);
   };
 
   return (
@@ -112,6 +159,67 @@ const Patients = () => {
             </Button>
           </div>
         </div>
+
+        {showAddForm && (
+          <div className="p-4 bg-secondary/30 border-b border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">Ajouter un nouveau patient</h3>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowAddForm(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Nom complet*</label>
+                <Input
+                  value={newPatient.fullName}
+                  onChange={(e) => setNewPatient({ ...newPatient, fullName: e.target.value })}
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Nom du parent*</label>
+                <Input
+                  value={newPatient.parentName}
+                  onChange={(e) => setNewPatient({ ...newPatient, parentName: e.target.value })}
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Téléphone du parent*</label>
+                <Input
+                  value={newPatient.parentPhone}
+                  onChange={(e) => setNewPatient({ ...newPatient, parentPhone: e.target.value })}
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Condition médicale</label>
+                <Input
+                  value={newPatient.condition}
+                  onChange={(e) => setNewPatient({ ...newPatient, condition: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleAddPatient}>
+                Ajouter le patient
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full">
