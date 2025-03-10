@@ -3,36 +3,87 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/context/ThemeContext";
+import { SparkleContainer } from "@/components/ui/SparkleContainer";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate authentication
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Get the ID token result which contains custom claims
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+
+      // Extract tenantId and role from custom claims
+      const tenantId = idTokenResult.claims.tenantId;
+      const role = idTokenResult.claims.role;
+
+      console.log('User claims:', { tenantId, role }); // Debug log
+
+      toast.success("Connexion réussie", {
+        duration: 3000,
+        position: "top-center",
+      });
+
+      // You might want to store these values in your app's state management
+      // For example, using Context or Redux
+
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
+    } catch (err: any) {
+      console.error("Firebase auth error:", err.code, err.message); // Debug log
+
+      // Handle specific error cases
+      if (err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/invalid-email' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password') {
+        toast.error("Email ou mot de passe incorrect", {
+          duration: 3000,
+          position: "top-center",
+        });
+      } else if (err.code === 'auth/too-many-requests') {
+        toast.error("Trop de tentatives échouées", {
+          duration: 3000,
+          position: "top-center",
+        });
+      } else {
+        toast.error("Erreur de connexion", {
+          duration: 3000,
+          position: "top-center",
+        });
+      }
+    } finally {
       setIsLoading(false);
-      toast.success("Connexion réussie");
-      navigate("/");
-    }, 1000);
+    }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Memoized sparkle background */}
+      <SparkleContainer theme={theme} />
+
       <div className="absolute top-4 right-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={toggleTheme}
           aria-label="Changer le thème"
         >
@@ -43,22 +94,26 @@ const SignIn = () => {
           )}
         </Button>
       </div>
-      
-      <div className="w-full max-w-md">
+
+      <div className="w-full max-w-md relative z-10">
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="rounded-lg bg-primary w-10 h-10 flex items-center justify-center text-white font-bold">
-              C
-            </div>
-            <span className="font-semibold text-xl">Cabinet Médical</span>
-          </div>
-          <h1 className="text-2xl font-semibold mb-1">Connexion</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold mb-3 text-foreground relative z-20">
+            Gérez votre cabinet en quelques clics
+          </h1>
+        </div>
+
+        <div className="glass-card p-8 backdrop-blur-sm bg-card/80 shadow-lg rounded-lg border border-border/30">
+          <h1 className="text-2xl font-semibold mb-4 text-center">Connexion</h1>
+          <p className="text-muted-foreground text-center mb-6">
             Connectez-vous à votre compte pour continuer
           </p>
-        </div>
-        
-        <div className="glass-card p-6">
+
+          {error && (
+            <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
@@ -77,7 +132,7 @@ const SignIn = () => {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
                 Mot de passe
@@ -102,7 +157,7 @@ const SignIn = () => {
                 </button>
               </div>
             </div>
-            
+
             <Button
               type="submit"
               className="w-full"

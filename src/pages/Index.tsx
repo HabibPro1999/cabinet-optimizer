@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from "react";
-import { 
-  CalendarDays, 
-  UserRound, 
-  ClipboardCheck, 
-  Coins 
+import {
+  CalendarDays,
+  UserRound,
+  ClipboardCheck,
+  Coins
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GreetingBanner } from "@/components/dashboard/GreetingBanner";
@@ -13,6 +13,10 @@ import { AppointmentList } from "@/components/dashboard/AppointmentList";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { Appointment, DashboardStats } from "@/types";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/lib/firebase";
 
 // Mock data for demonstration
 const MOCK_APPOINTMENTS: Appointment[] = [
@@ -83,6 +87,30 @@ const MOCK_STATS: DashboardStats = {
 const Index = () => {
   const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
   const [stats, setStats] = useState<DashboardStats>(MOCK_STATS);
+  const [userName, setUserName] = useState("");
+  const { tenantId } = useAuth();
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (!tenantId) return;
+
+      try {
+        // Update the path to include the 'data' subcollection
+        const userDoc = doc(db, tenantId, 'users', 'data', auth.currentUser?.uid);
+        const userSnapshot = await getDoc(userDoc);
+
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          setUserName(userData.fullName || "Utilisateur");
+        }
+      } catch (error) {
+        console.error("Error fetching user name:", error);
+        setUserName("Utilisateur");
+      }
+    };
+
+    fetchUserName();
+  }, [tenantId]);
 
   // Simulate loading data
   useEffect(() => {
@@ -91,7 +119,7 @@ const Index = () => {
       setAppointments(MOCK_APPOINTMENTS);
       setStats(MOCK_STATS);
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -108,13 +136,13 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <GreetingBanner 
-        name="Dr. Dupont" 
+      <GreetingBanner
+        name={userName}
         tomorrow={{
           firstAppointmentTime: "09:00"
         }}
       />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatsCard
           title="Rendez-vous aujourd'hui"
@@ -140,18 +168,18 @@ const Index = () => {
           description="Ce mois-ci"
         />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <CalendarView 
+          <CalendarView
             appointments={appointments}
             onAppointmentClick={handleAppointmentClick}
             onAddAppointment={handleAddAppointment}
           />
         </div>
-        
+
         <div>
-          <AppointmentList 
+          <AppointmentList
             appointments={appointments}
             title="Prochains rendez-vous"
             onAppointmentClick={handleAppointmentClick}

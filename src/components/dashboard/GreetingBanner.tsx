@@ -15,10 +15,10 @@ interface GreetingBannerProps {
 export function GreetingBanner({ name, tomorrow }: GreetingBannerProps) {
   const [greeting, setGreeting] = useState("");
   const [showTomorrow, setShowTomorrow] = useState(false);
-  
+
   useEffect(() => {
     const hour = new Date().getHours();
-    
+
     if (hour < 12) {
       setGreeting("Bonjour");
     } else if (hour < 18) {
@@ -26,7 +26,7 @@ export function GreetingBanner({ name, tomorrow }: GreetingBannerProps) {
     } else {
       setGreeting("Bonsoir");
     }
-    
+
     // Show tomorrow message after 17:00
     setShowTomorrow(hour >= 17 && !!tomorrow?.firstAppointmentTime);
   }, [tomorrow]);
@@ -48,7 +48,7 @@ export function GreetingBanner({ name, tomorrow }: GreetingBannerProps) {
           <h1 className="text-2xl font-semibold">
             {greeting}, <span className="text-primary">{name}</span>
           </h1>
-          
+
           <p className="text-muted-foreground max-w-md">
             {showTomorrow && tomorrow?.firstAppointmentTime ? (
               <>
@@ -64,7 +64,7 @@ export function GreetingBanner({ name, tomorrow }: GreetingBannerProps) {
             )}
           </p>
         </div>
-        
+
         <div className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
           "bg-primary/10 text-primary animate-scale-in"
@@ -73,7 +73,7 @@ export function GreetingBanner({ name, tomorrow }: GreetingBannerProps) {
           <span>Bienvenue</span>
         </div>
       </div>
-      
+
       <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute -top-6 -left-6 w-24 h-24 bg-primary/5 rounded-full blur-3xl" />
     </div>

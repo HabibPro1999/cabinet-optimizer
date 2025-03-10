@@ -1,13 +1,13 @@
 
 import { useState } from "react";
-import { 
-  Users, 
-  ShieldCheck, 
-  Settings as SettingsIcon, 
-  UserPlus, 
-  Edit, 
-  Trash, 
-  Check, 
+import {
+  Users,
+  ShieldCheck,
+  Settings as SettingsIcon,
+  UserPlus,
+  Edit,
+  Trash,
+  Check,
   X,
   AlertCircle,
   Sun,
@@ -88,7 +88,7 @@ const Settings = () => {
             role: newUser.role,
           },
         ]);
-        
+
         // Reset form and hide it
         setNewUser({
           name: "",
@@ -97,7 +97,7 @@ const Settings = () => {
           password: "",
         });
         setShowAddUserForm(false);
-        
+
         toast.success("Utilisateur ajouté avec succès");
       } else {
         toast.error("Veuillez remplir tous les champs obligatoires");
@@ -141,7 +141,7 @@ const Settings = () => {
       toast.error("Impossible de supprimer un administrateur");
       return;
     }
-    
+
     setUsers(users.filter((user) => user.id !== userId));
     toast.success("Utilisateur supprimé avec succès");
   };
@@ -158,8 +158,8 @@ const Settings = () => {
         className={cn(
           "px-2.5 py-0.5 rounded-full text-xs font-medium",
           role === "admin" ? "bg-primary/20 text-primary" :
-          role === "doctor" ? "bg-status-confirmed/20 text-status-confirmed" :
-          "bg-status-pending/20 text-status-pending"
+            role === "doctor" ? "bg-status-confirmed/20 text-status-confirmed" :
+              "bg-status-pending/20 text-status-pending"
         )}
       >
         {role === "admin" ? "Admin" : role === "doctor" ? "Médecin" : "Assistant"}
@@ -232,15 +232,15 @@ const Settings = () => {
               <div className="p-4 bg-secondary/30 border-b border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium">Ajouter un nouvel utilisateur</h3>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowAddUserForm(false)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Nom complet*</label>
@@ -387,7 +387,7 @@ const Settings = () => {
         {activeTab === "permissions" && (
           <div className="p-6">
             <h2 className="font-medium mb-4">Permissions des utilisateurs</h2>
-            
+
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full">
                 <thead>
@@ -428,7 +428,7 @@ const Settings = () => {
                 </tbody>
               </table>
             </div>
-            
+
             <div className="mt-6 flex items-center gap-2 p-4 rounded-lg bg-status-pending/10 border border-status-pending/20 text-sm">
               <AlertCircle className="h-5 w-5 text-status-pending flex-shrink-0" />
               <p>Seul l'administrateur peut modifier les permissions des utilisateurs. Les médecins peuvent avoir accès aux calendriers d'autres médecins si l'administrateur l'autorise.</p>
@@ -439,7 +439,7 @@ const Settings = () => {
         {activeTab === "general" && (
           <div className="p-6">
             <h2 className="font-medium mb-6">Paramètres généraux</h2>
-            
+
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -450,7 +450,7 @@ const Settings = () => {
                     defaultValue="Cabinet Médical"
                   />
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium">Email</label>
                   <input
@@ -459,7 +459,7 @@ const Settings = () => {
                     defaultValue="contact@cabinet-medical.fr"
                   />
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium">Téléphone</label>
                   <input
@@ -468,7 +468,7 @@ const Settings = () => {
                     defaultValue="+33 1 23 45 67 89"
                   />
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium">Adresse</label>
                   <input
@@ -478,7 +478,7 @@ const Settings = () => {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium">Horaires d'ouverture</label>
                 <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -508,7 +508,7 @@ const Settings = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium mb-3 block">Thème</label>
                 <div className="flex items-center gap-4">
@@ -534,7 +534,7 @@ const Settings = () => {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-center mt-8">
                 <Button className="px-6">
                   Enregistrer les modifications

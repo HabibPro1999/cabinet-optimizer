@@ -24,14 +24,14 @@ const App = () => (
         <Toaster />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<SignIn />} />
+            <Route path="/dashboard" element={<Index />} />
             <Route path="/patients" element={<Patients />} />
             <Route path="/patients/:id" element={<PatientDetail />} />
             <Route path="/appointments" element={<Appointments />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/inventory" element={<Inventory />} />
-            <Route path="/signin" element={<SignIn />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

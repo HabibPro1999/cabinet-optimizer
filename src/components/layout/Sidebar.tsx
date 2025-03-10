@@ -1,13 +1,13 @@
 
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  CalendarDays, 
-  ChevronLeft, 
-  ChevronRight, 
-  ClipboardList, 
-  Home, 
-  Settings, 
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Home,
+  Settings,
   Users,
   BarChart3,
   Menu
@@ -27,7 +27,7 @@ const sidebarLinks: SidebarLink[] = [
   {
     icon: Home,
     label: "Tableau de bord",
-    href: "/",
+    href: "/dashboard",
     roles: ["admin", "doctor", "assistant"],
   },
   {
@@ -116,22 +116,19 @@ export function Sidebar() {
           "fixed top-0 left-0 z-50 h-full bg-sidebar transition-all duration-300 ease-in-out",
           isMobile
             ? cn(
-                "w-64 transform",
-                isMobileOpen ? "translate-x-0" : "-translate-x-full"
-              )
+              "w-64 transform",
+              isMobileOpen ? "translate-x-0" : "-translate-x-full"
+            )
             : cn(
-                showSidebar ? "w-64" : "w-20",
-                "border-r border-sidebar-border"
-              )
+              showSidebar ? "w-64" : "w-20",
+              "border-r border-sidebar-border"
+            )
         )}
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6">
             <div className={cn("flex items-center gap-3", !showSidebar && "justify-center w-full")}>
-              <div className="flex items-center justify-center rounded-lg bg-primary w-8 h-8 text-white font-bold">
-                C
-              </div>
-              {showSidebar && <span className="font-semibold text-white">Cabinet Médical</span>}
+              {showSidebar && <span className="font-semibold text-white">Mon cabinet</span>}
             </div>
             {!isMobile && (
               <Button
@@ -140,7 +137,7 @@ export function Sidebar() {
                 className="text-white hover:bg-sidebar-accent"
                 onClick={toggleSidebar}
               >
-                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                {!isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
               </Button>
             )}
           </div>

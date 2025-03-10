@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { 
-  Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
-  Filter, 
-  Plus, 
-  Search, 
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Plus,
+  Search,
   CalendarPlus,
   ListFilter
 } from "lucide-react";
@@ -91,7 +91,8 @@ const STATUSES: AppointmentStatus[] = ["pending", "confirmed", "done", "canceled
 type ViewMode = "calendar" | "list";
 
 const Appointments = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
+  // Change the default view mode to "list"
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
@@ -105,16 +106,16 @@ const Appointments = () => {
       searchQuery === "" ||
       appointment.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       appointment.doctorName.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     // Filter by date (only for list view)
     const matchesDate = viewMode === "calendar" ? true : appointment.date === format(selectedDate, "yyyy-MM-dd");
-    
+
     // Filter by doctor
     const matchesDoctor = selectedDoctor === null || appointment.doctorId === selectedDoctor;
-    
+
     // Filter by status
     const matchesStatus = selectedStatus === null || appointment.status === selectedStatus;
-    
+
     return matchesSearch && matchesDate && matchesDoctor && matchesStatus;
   });
 
@@ -162,24 +163,24 @@ const Appointments = () => {
                 size="sm"
                 className={cn(
                   "h-8 gap-1",
-                  viewMode === "calendar" && "bg-background shadow-sm"
-                )}
-                onClick={() => setViewMode("calendar")}
-              >
-                <Calendar className="h-4 w-4" />
-                Calendrier
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 gap-1",
                   viewMode === "list" && "bg-background shadow-sm"
                 )}
                 onClick={() => setViewMode("list")}
               >
                 <ListFilter className="h-4 w-4" />
                 Liste
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-8 gap-1",
+                  viewMode === "calendar" && "bg-background shadow-sm"
+                )}
+                onClick={() => setViewMode("calendar")}
+              >
+                <Calendar className="h-4 w-4" />
+                Calendrier
               </Button>
             </div>
 
@@ -240,10 +241,10 @@ const Appointments = () => {
                     {status === "pending"
                       ? "En attente"
                       : status === "confirmed"
-                      ? "Confirmé"
-                      : status === "done"
-                      ? "Terminé"
-                      : "Annulé"}
+                        ? "Confirmé"
+                        : status === "done"
+                          ? "Terminé"
+                          : "Annulé"}
                   </option>
                 ))}
               </select>
@@ -266,6 +267,8 @@ const Appointments = () => {
             onAppointmentClick={handleAppointmentClick}
           />
         )}
+
+
       </div>
     </DashboardLayout>
   );
