@@ -1,83 +1,105 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Plus, 
-  Search, 
-  UserPlus, 
-  FileText, 
+import {
+  Plus,
+  Search,
+  UserPlus,
+  FileText,
   MoreHorizontal,
   Filter,
   ArrowUpDown,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
+import { NewPatientDialog } from "@/components/patients/NewPatientDialog";
 
-// Mock data for demonstration
-const MOCK_PATIENTS = [
-  {
-    id: "p1",
-    fullName: "Sophie Martin",
-    parentName: "Jean Martin",
-    parentPhone: "+33 6 12 34 56 78",
-    condition: "Allergie saisonnière",
-    createdAt: "2023-01-15",
-  },
-  {
-    id: "p2",
-    fullName: "Thomas Bernard",
-    parentName: "Marie Bernard",
-    parentPhone: "+33 6 23 45 67 89",
-    condition: "Asthme",
-    createdAt: "2023-02-20",
-  },
-  {
-    id: "p3",
-    fullName: "Claire Dubois",
-    parentName: "Pierre Dubois",
-    parentPhone: "+33 6 34 56 78 90",
-    condition: "Eczéma",
-    createdAt: "2023-03-10",
-  },
-  {
-    id: "p4",
-    fullName: "Antoine Leroy",
-    parentName: "Sophie Leroy",
-    parentPhone: "+33 6 45 67 89 01",
-    condition: "Rhinite",
-    createdAt: "2023-04-05",
-  },
-  {
-    id: "p5",
-    fullName: "Marie Petit",
-    parentName: "Laurent Petit",
-    parentPhone: "+33 6 56 78 90 12",
-    condition: "Bronchite chronique",
-    createdAt: "2023-05-15",
-  },
-];
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { deleteDoc, doc } from "firebase/firestore";
 
-interface NewPatientForm {
+interface Patient {
+  id: string;
   fullName: string;
   parentName: string;
   parentPhone: string;
+  secondaryPhone?: string;
+  parentEmail?: string;
   condition: string;
+  sex: string;
+  hasDocuments?: boolean;
+  createdAt: string;
 }
 
 const Patients = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [patients, setPatients] = useState(MOCK_PATIENTS);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newPatient, setNewPatient] = useState<NewPatientForm>({
-    fullName: "",
-    parentName: "",
-    parentPhone: "",
-    condition: "",
-  });
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const navigate = useNavigate();
+  const { tenantId } = useAuth();
+  const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
+
+  // Fetch patients from Firestore
+  useEffect(() => {
+    const fetchPatients = async () => {
+      if (!tenantId) return;
+
+      try {
+        setIsLoading(true);
+        const patientsRef = collection(db, `${tenantId}/patients/data`);
+        const q = query(patientsRef, orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        const patientsList: Patient[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          patientsList.push({
+            id: doc.id,
+            fullName: data.fullName || "",
+            parentName: data.parentName || "",
+            parentPhone: data.parentPhone || "",
+            secondaryPhone: data.secondaryPhone || "",
+            parentEmail: data.parentEmail || "",
+            condition: data.condition || "",
+            sex: data.sex || "",
+            hasDocuments: data.hasDocuments || false,
+            createdAt: data.createdAt || "",
+          });
+        });
+
+        setPatients(patientsList);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        toast.error("Erreur lors du chargement des patients");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, [tenantId]);
 
   // Filter patients based on search query
   const filteredPatients = patients.filter(
@@ -87,44 +109,35 @@ const Patients = () => {
       patient.condition?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle adding a new patient
-  const handleAddPatient = () => {
-    if (showAddForm) {
-      if (newPatient.fullName && newPatient.parentName && newPatient.parentPhone) {
-        // Add new patient to the list
-        const newId = `p${patients.length + 1}`;
-        const createdAt = new Date().toISOString().split('T')[0];
-        
-        setPatients([
-          ...patients,
-          {
-            id: newId,
-            ...newPatient,
-            createdAt,
-          },
-        ]);
-        
-        // Reset form and hide it
-        setNewPatient({
-          fullName: "",
-          parentName: "",
-          parentPhone: "",
-          condition: "",
-        });
-        setShowAddForm(false);
-        
-        toast.success("Patient ajouté avec succès");
-      } else {
-        toast.error("Veuillez remplir tous les champs obligatoires");
-      }
-    } else {
-      setShowAddForm(true);
-    }
+  // Handle adding a new patient to the local state
+  const handlePatientAdded = (newPatient: Patient) => {
+    setPatients([newPatient, ...patients]);
   };
 
   // Handle viewing a patient's details
   const handleViewPatient = (patientId: string) => {
+    console.log("Debug - Navigating with ID:", patientId); // Add this debug log
     navigate(`/patients/${patientId}`);
+  };
+
+  // Handle deleting a patient
+  const handleDeletePatient = async () => {
+    if (!patientToDelete || !tenantId) return;
+
+    try {
+      // Delete patient from Firestore
+      const patientRef = doc(db, `${tenantId}/patients/data/${patientToDelete}`);
+      await deleteDoc(patientRef);
+
+      // Remove patient from local state
+      setPatients(patients.filter(patient => patient.id !== patientToDelete));
+      toast.success("Patient supprimé avec succès");
+    } catch (error) {
+      console.error("Error deleting patient:", error);
+      toast.error("Erreur lors de la suppression du patient");
+    } finally {
+      setPatientToDelete(null);
+    }
   };
 
   return (
@@ -153,73 +166,12 @@ const Patients = () => {
               <Filter className="h-4 w-4" />
               Filtrer
             </Button>
-            <Button size="sm" className="gap-1" onClick={handleAddPatient}>
+            <Button size="sm" className="gap-1" onClick={() => setShowAddDialog(true)}>
               <UserPlus className="h-4 w-4" />
               Nouveau patient
             </Button>
           </div>
         </div>
-
-        {showAddForm && (
-          <div className="p-4 bg-secondary/30 border-b border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Ajouter un nouveau patient</h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setShowAddForm(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Nom complet*</label>
-                <Input
-                  value={newPatient.fullName}
-                  onChange={(e) => setNewPatient({ ...newPatient, fullName: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Nom du parent*</label>
-                <Input
-                  value={newPatient.parentName}
-                  onChange={(e) => setNewPatient({ ...newPatient, parentName: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Téléphone du parent*</label>
-                <Input
-                  value={newPatient.parentPhone}
-                  onChange={(e) => setNewPatient({ ...newPatient, parentPhone: e.target.value })}
-                  className="mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Condition médicale</label>
-                <Input
-                  value={newPatient.condition}
-                  onChange={(e) => setNewPatient({ ...newPatient, condition: e.target.value })}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                Annuler
-              </Button>
-              <Button onClick={handleAddPatient}>
-                Ajouter le patient
-              </Button>
-            </div>
-          </div>
-        )}
 
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -242,6 +194,12 @@ const Patients = () => {
                 </th>
                 <th className="text-left py-3 px-4 font-medium text-muted-foreground">
                   <div className="flex items-center gap-1">
+                    Sexe
+                    <ArrowUpDown className="h-3 w-3" />
+                  </div>
+                </th>
+                <th className="text-left py-3 px-4 font-medium text-muted-foreground">
+                  <div className="flex items-center gap-1">
                     Condition
                     <ArrowUpDown className="h-3 w-3" />
                   </div>
@@ -252,30 +210,61 @@ const Patients = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredPatients.length > 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                    Chargement des patients...
+                  </td>
+                </tr>
+              ) : filteredPatients.length > 0 ? (
                 filteredPatients.map((patient) => (
                   <tr
                     key={patient.id}
                     className="hover:bg-secondary/50 transition-colors cursor-pointer"
-                    onClick={() => handleViewPatient(patient.id)}
+                    onClick={(e) => {
+                      // Prevent navigation when clicking on action buttons
+                      if ((e.target as HTMLElement).closest('.action-button')) {
+                        e.stopPropagation();
+                        return;
+                      }
+                      handleViewPatient(patient.id);
+                    }}
                   >
                     <td className="py-3 px-4">{patient.fullName}</td>
                     <td className="py-3 px-4">{patient.parentName}</td>
                     <td className="py-3 px-4">{patient.parentPhone}</td>
+                    <td className="py-3 px-4">
+                      {patient.sex === 'male' ? 'Masculin' :
+                        patient.sex === 'female' ? 'Féminin' :
+                          patient.sex === 'other' ? 'Autre' : ''}
+                    </td>
                     <td className="py-3 px-4">{patient.condition}</td>
                     <td className="py-3 px-4 text-right">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="action-button">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                       </Button>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="action-button">
+                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setPatientToDelete(patient.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
                     Aucun patient trouvé
                   </td>
                 </tr>
@@ -288,6 +277,38 @@ const Patients = () => {
           Affichage de {filteredPatients.length} sur {patients.length} patients
         </div>
       </div>
+
+      {/* New Patient Dialog */}
+      {tenantId && (
+        <NewPatientDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onPatientAdded={handlePatientAdded}
+          tenantId={tenantId}
+        />
+      )}
+
+      {/* Delete Patient Confirmation Dialog */}
+      <AlertDialog open={!!patientToDelete} onOpenChange={(open) => !open && setPatientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action ne peut pas être annulée. Cela supprimera définitivement le patient
+              et toutes ses données associées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePatient}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
