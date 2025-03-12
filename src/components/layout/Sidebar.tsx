@@ -72,13 +72,21 @@ export function Sidebar() {
   const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Close mobile sidebar when route changes
+  // Check if current route is a main dashboard screen
+  const isMainScreen = ["/dashboard", "/appointments", "/patients", "/analytics", "/inventory", "/settings"].some(
+    path => location.pathname === path
+  );
+
+  // Add this effect to handle initialization
   useEffect(() => {
-    if (isMobile) {
-      setIsMobileOpen(false);
-    }
-  }, [location.pathname, isMobile]);
+    // Mark as initialized after a short delay to ensure stable detection
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleSidebar = () => {
     if (isMobile) {
@@ -88,25 +96,28 @@ export function Sidebar() {
     }
   };
 
-  const showSidebar = isMobile ? isMobileOpen : !isCollapsed;
+  // Only show sidebar if explicitly opened on mobile
+  const showSidebar = isMobile ? (isInitialized && isMobileOpen) : !isCollapsed;
 
   return (
     <>
-      {isMobile && (
+      {/* Only show drawer button on main screens when on mobile */}
+      {isMobile && isMainScreen && (
         <Button
           variant="ghost"
           size="icon"
-          className="fixed top-4 left-4 z-50"
+          className="fixed top-4 z-50"
           onClick={toggleSidebar}
         >
           <Menu className="h-5 w-5" />
         </Button>
       )}
 
+      {/* Update the overlay to respect initialization */}
       <div
         className={cn(
           "fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300",
-          isMobile && isMobileOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+          isMobile && isMobileOpen && isInitialized ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
         onClick={() => setIsMobileOpen(false)}
       />
