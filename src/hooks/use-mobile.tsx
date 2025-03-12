@@ -4,10 +4,7 @@ import * as React from "react"
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(() => {
-    // Initialize with the current window width on first render
-    return typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
-  })
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
     // Create a responsive media query
@@ -28,6 +25,12 @@ export function useIsMobile() {
     return () => {
       mediaQuery.removeEventListener('change', handleResize)
     }
+<<<<<<< HEAD
+=======
+    mql.addEventListener("change", onChange)
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    return () => mql.removeEventListener("change", onChange)
+>>>>>>> parent of c921424 (implement fireabse services)
   }, [])
 
   return isMobile

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -103,27 +104,27 @@
   .glass-card {
     @apply bg-white/90 dark:bg-black/60 backdrop-blur-lg border border-white/20 dark:border-white/10 rounded-xl shadow-glass;
   }
-
+  
   .status-badge {
     @apply px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
-
+  
   .status-badge-pending {
     @apply bg-status-pending/20 text-status-pending;
   }
-
+  
   .status-badge-confirmed {
     @apply bg-status-confirmed/20 text-status-confirmed;
   }
-
+  
   .status-badge-done {
     @apply bg-status-done/20 text-status-done;
   }
-
+  
   .status-badge-canceled {
     @apply bg-status-canceled/20 text-status-canceled;
   }
-
+  
   .animate-in {
     animation: scale-in 0.2s ease-out;
   }
@@ -137,79 +138,5 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-}
-
-
-
-/* Prevent content shifting when sidebar opens */
-html.sidebar-open,
-html.sidebar-open body {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
-/* Improve mobile responsiveness */
-@media (max-width: 768px) {
-  .container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  /* Adjust spacing for mobile */
-  .glass-card {
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
-
-  /* Make buttons more tappable on mobile */
-  .btn,
-  button {
-    min-height: 2.5rem;
-  }
-}
-
-/* Improve table responsiveness */
-@media (max-width: 640px) {
-  table {
-    display: block;
-    width: 100%;
-  }
-
-  /* Add horizontal scrolling for tables */
-  .table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Add this to your existing CSS */
-
-/* Mobile-friendly dialog styles */
-@media (max-width: 640px) {
-  .mobile-friendly-dialog {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-  }
-
-  /* Adjust the content padding for mobile */
-  .mobile-friendly-dialog .dialog-content {
-    padding: 16px !important;
-  }
-
-  /* Make sure the footer buttons are properly sized */
-  .mobile-friendly-dialog .dialog-footer {
-    flex-direction: column-reverse !important;
-    gap: 8px !important;
-  }
-
-  .mobile-friendly-dialog .dialog-footer button {
-    width: 100% !important;
   }
 }
