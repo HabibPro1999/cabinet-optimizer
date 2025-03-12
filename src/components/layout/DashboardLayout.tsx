@@ -11,12 +11,19 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
-
+import { ArrowLeft, Menu /* other icons */ } from "lucide-react";
+// Add a new prop to accept a back navigation function
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  showBackButton?: boolean; // New prop
+  onBack?: () => void;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({
+  children,
+  showBackButton = false,
+  onBack
+}: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -55,7 +62,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <Sidebar />
+      <Sidebar showMenuButton={!showBackButton} />
       <ConfirmationDialog
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
@@ -73,10 +80,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-background/90 backdrop-blur-sm sticky top-0 z-10">
-          {!isMobile && (
-            <div className="text-sm text-muted-foreground">
-              {formatDate(currentDate)}
-            </div>
+          {showBackButton ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onBack ? onBack() : navigate(-1)}
+              aria-label="Retour"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          ) : (
+            <div className="w-5"></div> // Empty div to maintain spacing
           )}
 
           <div className={cn("flex items-center gap-2", isMobile && "ml-auto")}>

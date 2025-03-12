@@ -184,18 +184,72 @@ const Patients = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-
             {/* Only show Add Patient button if user is not a doctor */}
             {role !== "doctor" && (
-              <Button size="sm" className="gap-1" onClick={() => setShowAddDialog(true)}>
+              <Button size="sm" className="w-full sm:w-auto gap-1" onClick={() => setShowAddDialog(true)}>
                 <UserPlus className="h-4 w-4" />
-                Nouveau patient
+                <span>Nouveau patient</span>
               </Button>
             )}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Replace the table with a responsive card layout for mobile */}
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Chargement des patients...
+            </div>
+          ) : filteredPatients.length > 0 ? (
+            <div className="divide-y divide-border">
+              {filteredPatients.map((patient) => (
+                <div
+                  key={patient.id}
+                  className="p-4 hover:bg-secondary/50 transition-colors"
+                  onClick={() => handleViewPatient(patient.id)}
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium">{patient.fullName}</h3>
+                    <div className="flex">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="action-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGeneratePDF(patient);
+                        }}
+                      >
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+
+                      {role !== "doctor" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="action-button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPatientToDelete(patient.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              Aucun patient trouvé
+            </div>
+          )}
+        </div>
+
+        {/* Keep the table for desktop view */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">

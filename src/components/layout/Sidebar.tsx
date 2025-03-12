@@ -64,7 +64,11 @@ const currentUser = {
   role: "admin" as const,
 };
 
-export function Sidebar() {
+interface SidebarProps {
+  showMenuButton?: boolean;
+}
+
+export function Sidebar({ showMenuButton = true }: SidebarProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -80,41 +84,45 @@ export function Sidebar() {
     }
   };
 
+  // Memoize filtered links to reduce re-renders
+  const filteredLinks = sidebarLinks.filter((link) =>
+    link.roles.includes(currentUser.role)
+  );
+
   return (
     <>
-      {isMobile && (
+      {isMobile && showMenuButton && (
         <Button
           variant="ghost"
           size="icon"
-          className="fixed top-4 z-50"
+          className="fixed top-4 left-4 z-50"
           onClick={toggleSidebar}
         >
           <Menu className="h-5 w-5" />
         </Button>
       )}
 
-      {/* Overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300",
-          isMobile && isMobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        onClick={() => setIsMobileOpen(false)}
-      />
+      {/* Overlay - only render when needed */}
+      {isMobile && isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-200"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full bg-sidebar transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 z-50 h-full bg-sidebar transition-transform duration-200 ease-in-out",
           isMobile
             ? cn(
-                "w-64 transform",
-                isMobileOpen ? "translate-x-0" : "-translate-x-full"
-              )
+              "w-64 transform",
+              isMobileOpen ? "translate-x-0" : "-translate-x-full"
+            )
             : cn(
-                "w-64 transform",
-                "-translate-x-full lg:translate-x-0"
-              ),
+              "w-64 transform",
+              "-translate-x-full lg:translate-x-0"
+            ),
           "border-r border-sidebar-border"
         )}
       >
@@ -127,23 +135,21 @@ export function Sidebar() {
 
           <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 pb-3">
             <ul className="space-y-1.5">
-              {sidebarLinks
-                .filter((link) => link.roles.includes(currentUser.role))
-                .map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      to={link.href}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-white/80 hover:text-white hover:bg-sidebar-accent whitespace-nowrap",
-                        location.pathname === link.href && "bg-sidebar-accent text-white"
-                      )}
-                      onClick={() => isMobile && setIsMobileOpen(false)}
-                    >
-                      <link.icon className="h-5 w-5 flex-shrink-0" />
-                      <span>{link.label}</span>
-                    </Link>
-                  </li>
-                ))}
+              {filteredLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-white/80 hover:text-white hover:bg-sidebar-accent whitespace-nowrap",
+                      location.pathname === link.href && "bg-sidebar-accent text-white"
+                    )}
+                    onClick={() => isMobile && setIsMobileOpen(false)}
+                  >
+                    <link.icon className="h-5 w-5 flex-shrink-0" />
+                    <span>{link.label}</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
 
