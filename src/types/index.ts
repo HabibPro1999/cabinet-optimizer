@@ -31,16 +31,19 @@ export interface Note {
   content: string;
   createdAt: string;
   isVoiceMemo?: boolean;
+
 }
 
 export interface Patient {
   id: string;
-  fullName: string;
+  name: string;
   parentName?: string;
   parentPhone?: string;
   condition?: string;
-  createdAt: string;
+  createdAt?: string;
   notes?: Note[];
+  lastVisit: string;
+
 }
 
 export interface DoctorStats {

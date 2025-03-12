@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,7 @@ import { Eye, EyeOff, Lock, Mail, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/context/ThemeContext";
 import { SparkleContainer } from "@/components/ui/SparkleContainer";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +17,23 @@ const SignIn = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { user, signIn, isLoading: authLoading } = useAuth();
+
+  // Only redirect if already logged in and auth is not loading
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate, authLoading]);
+
+  // If auth is still loading, show nothing or a loading indicator
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,30 +41,18 @@ const SignIn = () => {
     setError(null);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      // Get the ID token result which contains custom claims
-      const idTokenResult = await userCredential.user.getIdTokenResult();
-
-      // Extract tenantId and role from custom claims
-      const tenantId = idTokenResult.claims.tenantId;
-      const role = idTokenResult.claims.role;
-
-      console.log('User claims:', { tenantId, role }); // Debug log
+      await signIn(email, password);
 
       toast.success("Connexion réussie", {
         duration: 3000,
         position: "top-center",
       });
 
-      // You might want to store these values in your app's state management
-      // For example, using Context or Redux
-
       setTimeout(() => {
         navigate("/dashboard");
       }, 500);
     } catch (err: any) {
-      console.error("Firebase auth error:", err.code, err.message); // Debug log
+      console.error("Firebase auth error:", err.code, err.message);
 
       // Handle specific error cases
       if (err.code === 'auth/invalid-credential' ||
@@ -75,6 +79,7 @@ const SignIn = () => {
     }
   };
 
+  // Only render the sign-in form if not authenticated and not loading
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
       {/* Memoized sparkle background */}
