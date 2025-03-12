@@ -20,6 +20,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth } from "@/lib/firebase";
 import { format, addDays, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 // Mock data for demonstration
 const MOCK_APPOINTMENTS: Appointment[] = [

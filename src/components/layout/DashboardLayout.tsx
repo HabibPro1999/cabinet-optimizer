@@ -73,9 +73,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-background/90 backdrop-blur-sm sticky top-0 z-10">
-          <div className="text-sm text-muted-foreground">
-            {formatDate(currentDate)}
-          </div>
+          {!isMobile && (
+            <div className="text-sm text-muted-foreground">
+              {formatDate(currentDate)}
+            </div>
+          )}
+          {isMobile && <div></div>}
 
           <div className="flex items-center gap-2">
             <Button
