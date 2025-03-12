@@ -38,6 +38,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteDoc, doc } from "firebase/firestore";
+// Add these imports at the top of the file
+import { pdf } from '@react-pdf/renderer';
+import { PatientPDF } from '@/components/patients/PatientPDF';
 
 interface Patient {
   id: string;
@@ -58,7 +61,7 @@ const Patients = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const navigate = useNavigate();
-  const { tenantId } = useAuth();
+  const { tenantId, role } = useAuth(); // Update this line to get userRole
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
 
   // Fetch patients from Firestore
@@ -140,6 +143,25 @@ const Patients = () => {
     }
   };
 
+  // Add this function after handleDeletePatient and before the return statement
+  const handleGeneratePDF = async (patient: Patient) => {
+    try {
+      const blob = await pdf(<PatientPDF patient={patient} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `patient-${patient.fullName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('PDF généré avec succès');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Erreur lors de la génération du PDF');
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="mb-8">
@@ -162,14 +184,14 @@ const Patients = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="gap-1">
-              <Filter className="h-4 w-4" />
-              Filtrer
-            </Button>
-            <Button size="sm" className="gap-1" onClick={() => setShowAddDialog(true)}>
-              <UserPlus className="h-4 w-4" />
-              Nouveau patient
-            </Button>
+
+            {/* Only show Add Patient button if user is not a doctor */}
+            {role !== "doctor" && (
+              <Button size="sm" className="gap-1" onClick={() => setShowAddDialog(true)}>
+                <UserPlus className="h-4 w-4" />
+                Nouveau patient
+              </Button>
+            )}
           </div>
         </div>
 
@@ -240,25 +262,38 @@ const Patients = () => {
                     </td>
                     <td className="py-3 px-4">{patient.condition}</td>
                     <td className="py-3 px-4 text-right">
-                      <Button variant="ghost" size="icon" className="action-button">
+                      {/* Only show PDF generation button for all users */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="action-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGeneratePDF(patient);
+                        }}
+                      >
                         <FileText className="h-4 w-4 text-muted-foreground" />
                       </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="action-button">
-                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setPatientToDelete(patient.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+
+                      {/* Only show dropdown menu if user is not a doctor */}
+                      {role !== "doctor" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="action-button">
+                              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              setPatientToDelete(patient.id);
+                            }}>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </td>
                   </tr>
                 ))

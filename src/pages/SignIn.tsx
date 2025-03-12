@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { SparkleBackground } from "@/components/ui/SparkleBackground";
+import { SparklesCore } from "@/components/ui/SparkleBackground";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
@@ -32,7 +32,7 @@ export default function SignIn() {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsLoading(true);
-    
+
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       toast.success("Connexion réussie");
@@ -47,8 +47,8 @@ export default function SignIn() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center relative">
-      <SparkleBackground />
-      
+      <SparklesCore />
+
       <div className="glass-card w-full max-w-md p-8 z-10">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-bold mb-2">Connexion</h1>
