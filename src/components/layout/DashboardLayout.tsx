@@ -69,7 +69,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <main
         className={cn(
           "flex-1 w-full transition-all duration-300 min-h-screen",
-          isMobile ? "ml-0" : "ml-20 lg:ml-[280px]"
+          "ml-0 lg:ml-64"
         )}
       >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-background/90 backdrop-blur-sm sticky top-0 z-10">
