@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { SparkleBackground } from "@/components/ui/SparkleBackground";
 import { useAuth } from "@/context/AuthContext";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { Moon, Sun } from "lucide-react"; // Added proper import
@@ -63,6 +64,8 @@ const SignIn = () => {
       >
         {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
       </Button>
+      
+      <SparkleBackground className="fixed inset-0 z-0" />
       
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 p-4">
         <div className="w-full max-w-md space-y-8 bg-background/60 backdrop-blur-xl p-8 rounded-xl border border-border shadow-lg">

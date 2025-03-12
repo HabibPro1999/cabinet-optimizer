@@ -91,7 +91,7 @@ const MOCK_STATS: DashboardStats = {
 const Index = () => {
   const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
   const [stats, setStats] = useState<DashboardStats>(MOCK_STATS);
-  const [userName, setUserName] = useState("Marion");
+  const [userName, setUserName] = useState("");
   const { tenantId } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [daysInMonth, setDaysInMonth] = useState<Date[]>([]);
