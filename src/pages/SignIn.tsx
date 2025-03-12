@@ -1,174 +1,120 @@
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Lock, Mail, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
-import { useTheme } from "@/context/ThemeContext";
-import { SparkleContainer } from "@/components/ui/SparkleContainer";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { SparkleBackground } from "@/components/ui/SparkleBackground";
 import { useAuth } from "@/context/AuthContext";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { Moon, Sun } from "lucide-react"; // Added proper import
+import { useTheme } from "@/context/ThemeContext";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const auth = getAuth();
   const { theme, toggleTheme } = useTheme();
-  const { user, signIn, isLoading: authLoading } = useAuth();
 
-  // Only redirect if already logged in and auth is not loading
-  useEffect(() => {
-    if (user && !authLoading) {
-      navigate("/dashboard");
-    }
-  }, [user, navigate, authLoading]);
-
-  // If auth is still loading, show nothing or a loading indicator
+  // If already authenticated, redirect to dashboard
   if (authLoading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-background">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  if (user) {
+    navigate("/dashboard");
+    return null;
+  }
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Veuillez remplir tous les champs");
+      return;
+    }
+    
     setIsLoading(true);
-    setError(null);
-
+    
     try {
-      await signIn(email, password);
-
-      toast.success("Connexion réussie", {
-        duration: 3000,
-        position: "top-center",
-      });
-
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 500);
-    } catch (err: any) {
-      console.error("Firebase auth error:", err.code, err.message);
-
-      // Handle specific error cases
-      if (err.code === 'auth/invalid-credential' ||
-        err.code === 'auth/invalid-email' ||
-        err.code === 'auth/user-not-found' ||
-        err.code === 'auth/wrong-password') {
-        toast.error("Email ou mot de passe incorrect", {
-          duration: 3000,
-          position: "top-center",
-        });
-      } else if (err.code === 'auth/too-many-requests') {
-        toast.error("Trop de tentatives échouées", {
-          duration: 3000,
-          position: "top-center",
-        });
-      } else {
-        toast.error("Erreur de connexion", {
-          duration: 3000,
-          position: "top-center",
-        });
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      toast.success("Connexion réussie!");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error("Échec de la connexion. Vérifiez vos identifiants.");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Only render the sign-in form if not authenticated and not loading
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Memoized sparkle background */}
-      <SparkleContainer theme={theme} />
-
-      <div className="absolute top-4 right-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          aria-label="Changer le thème"
-        >
-          {theme === "dark" ? (
-            <Sun className="h-5 w-5" />
-          ) : (
-            <Moon className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold mb-3 text-foreground relative z-20">
-            Gérez votre cabinet en quelques clics
-          </h1>
-        </div>
-
-        <div className="glass-card p-8 backdrop-blur-sm bg-card/80 shadow-lg rounded-lg border border-border/30">
-          <h1 className="text-2xl font-semibold mb-4 text-center">Connexion</h1>
-          <p className="text-muted-foreground text-center mb-6">
-            Connectez-vous à votre compte pour continuer
-          </p>
-
-          {error && (
-            <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-4 right-4"
+        onClick={toggleTheme}
+        aria-label="Changer le thème"
+      >
+        {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
+      
+      <SparkleBackground className="fixed inset-0 z-0" />
+      
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 p-4">
+        <div className="w-full max-w-md space-y-8 bg-background/60 backdrop-blur-xl p-8 rounded-xl border border-border shadow-lg">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold">Cabinet Médical</h1>
+            <p className="mt-2 text-muted-foreground">Connectez-vous à votre compte</p>
+          </div>
+          
+          <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium">
+                  Email
+                </label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
-                  placeholder="nom@exemple.fr"
+                  autoComplete="email"
+                  required
+                  className="mt-1"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-9"
-                  required
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Mot de passe
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium">
+                  Mot de passe
+                </label>
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="mt-1"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9 pr-9"
-                  required
                 />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
-
+            
             <Button
               type="submit"
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Connexion en cours..." : "Se connecter"}
+              {isLoading ? "Connexion..." : "Se connecter"}
             </Button>
           </form>
         </div>
