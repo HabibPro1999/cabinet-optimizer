@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
   ClipboardList,
   Home,
   Settings,
@@ -74,19 +72,14 @@ export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Check if current route is a main dashboard screen
-  const isMainScreen = ["/dashboard", "/appointments", "/patients", "/analytics", "/inventory", "/settings"].some(
-    path => location.pathname === path
-  );
-
-  // Add this effect to handle initialization
+  // Handle auto-collapse based on screen size
   useEffect(() => {
-    // Mark as initialized after a short delay to ensure stable detection
-    const timer = setTimeout(() => {
-      setIsInitialized(true);
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
+    setIsCollapsed(!isMobile);
+    // Set initialized after first render
+    setIsInitialized(true);
+    // Close mobile drawer on route change
+    setIsMobileOpen(false);
+  }, [isMobile, location.pathname]);
 
   const toggleSidebar = () => {
     if (isMobile) {
@@ -96,13 +89,13 @@ export function Sidebar() {
     }
   };
 
-  // Only show sidebar if explicitly opened on mobile
-  const showSidebar = isMobile ? (isInitialized && isMobileOpen) : !isCollapsed;
+  // Whether to show the sidebar content
+  const showSidebar = isMobile ? isMobileOpen : !isCollapsed;
 
   return (
     <>
       {/* Only show drawer button on main screens when on mobile */}
-      {isMobile && isMainScreen && (
+      {isMobile && (
         <Button
           variant="ghost"
           size="icon"
@@ -113,7 +106,7 @@ export function Sidebar() {
         </Button>
       )}
 
-      {/* Update the overlay to respect initialization */}
+      {/* Overlay for mobile */}
       <div
         className={cn(
           "fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300",
@@ -122,6 +115,7 @@ export function Sidebar() {
         onClick={() => setIsMobileOpen(false)}
       />
 
+      {/* Sidebar component with fixed width to prevent text wrapping issues */}
       <aside
         className={cn(
           "fixed top-0 left-0 z-50 h-full bg-sidebar transition-all duration-300 ease-in-out",
@@ -139,18 +133,8 @@ export function Sidebar() {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6">
             <div className={cn("flex items-center gap-3", !showSidebar && "justify-center w-full")}>
-              {showSidebar && <span className="font-semibold text-white">Mon cabinet</span>}
+              {showSidebar && <span className="font-semibold text-white whitespace-nowrap">Mon cabinet</span>}
             </div>
-            {!isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-sidebar-accent"
-                onClick={toggleSidebar}
-              >
-                {!isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              </Button>
-            )}
           </div>
 
           <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 pb-3">
@@ -166,9 +150,10 @@ export function Sidebar() {
                         location.pathname === link.href && "bg-sidebar-accent text-white",
                         !showSidebar && "justify-center",
                       )}
+                      onClick={() => isMobile && setIsMobileOpen(false)}
                     >
                       <link.icon className="h-5 w-5 flex-shrink-0" />
-                      {showSidebar && <span>{link.label}</span>}
+                      {showSidebar && <span className="whitespace-nowrap">{link.label}</span>}
                     </Link>
                   </li>
                 ))}
@@ -182,8 +167,8 @@ export function Sidebar() {
               </div>
               {showSidebar && (
                 <div className="overflow-hidden">
-                  <p className="text-sm font-medium text-white truncate">Dr. Martin Dupont</p>
-                  <p className="text-xs text-white/70 truncate">Médecin Principal</p>
+                  <p className="text-sm font-medium text-white truncate whitespace-nowrap">Dr. Martin Dupont</p>
+                  <p className="text-xs text-white/70 truncate whitespace-nowrap">Médecin Principal</p>
                 </div>
               )}
             </div>

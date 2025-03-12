@@ -68,16 +68,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <main
         className={cn(
-          "flex-1 transition-all duration-300 min-h-screen",
+          "flex-1 w-full transition-all duration-300 min-h-screen",
           isMobile ? "ml-0" : "ml-20 lg:ml-[280px]"
         )}
       >
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-background/90 backdrop-blur-sm sticky top-0 z-10">
-          <div className="text-sm text-muted-foreground">
-            {formatDate(currentDate)}
-          </div>
+          {!isMobile && (
+            <div className="text-sm text-muted-foreground">
+              {formatDate(currentDate)}
+            </div>
+          )}
 
-          <div className="flex items-center gap-2">
+          <div className={cn("flex items-center gap-2", isMobile && "ml-auto")}>
             <Button
               variant="ghost"
               size="icon"
